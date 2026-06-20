@@ -1,19 +1,21 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { getDatabase } from "firebase/database";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyALjelvJq1b43f8Q6dYZiGpu8hHrbqjdcE",
-  authDomain: "gestor-uber99-2e6a5.firebaseapp.com",
-  projectId: "gestor-uber99-2e6a5",
-  storageBucket: "gestor-uber99-2e6a5.firebasestorage.app",
-  messagingSenderId: "343093904974",
-  appId: "1:343093904974:web:e81394a4841f3a6385651f"
+  projectId: "gestor-uber99",
+  appId: "1:547450104538:web:69be0bafaa194edf4c93e3",
+  databaseURL: "https://gestor-uber99-default-rtdb.firebaseio.com",
+  storageBucket: "gestor-uber99.firebasestorage.app",
+  apiKey: "AIzaSyA8-zonWTI0IRzBsPeM1D8ajfXdU4P2m_g",
+  authDomain: "gestor-uber99.firebaseapp.com",
+  messagingSenderId: "547450104538"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
+export { db };
 export default app;

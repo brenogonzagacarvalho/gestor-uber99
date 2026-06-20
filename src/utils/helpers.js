@@ -16,16 +16,29 @@ export function calcRides(weeklyGross) {
   return { total, perNight, perHour };
 }
 
-export function getWeekDates() {
-  const today = new Date();
-  const day = today.getDay();
+export function getWednesdayOfDate(date) {
+  const d = new Date(date);
+  const day = d.getDay();
   // Semana começa na Quarta (3)
   const diff = (day >= 3) ? day - 3 : day + 4;
-  const wed = new Date(today);
-  wed.setDate(today.getDate() - diff);
+  d.setDate(d.getDate() - diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+export function getWeekDates(wednesdayDate = getWednesdayOfDate(new Date())) {
   return DAYS_OF_WEEK.map((_, i) => {
-    const d = new Date(wed);
-    d.setDate(wed.getDate() + i);
-    return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+    const d = new Date(wednesdayDate);
+    d.setDate(wednesdayDate.getDate() + i);
+    
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const dayVal = String(d.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${dayVal}`;
+    
+    return {
+      dateStr,
+      label: d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
+    };
   });
 }

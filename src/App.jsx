@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
-import firebaseApp from "./services/firebase"; // Initializes Firebase
+import { useState, useMemo, useEffect } from "react";
+import firebaseApp, { db } from "./services/firebase"; // Initializes Firebase
+import { ref, onValue } from "firebase/database";
 
 // Constants & Helpers
 import {
@@ -12,7 +13,8 @@ import {
   getDebtPayment,
   getFixedExpenses,
   calcRides,
-  getWeekDates
+  getWeekDates,
+  getWednesdayOfDate
 } from "./utils/helpers";
 
 // Components
@@ -33,20 +35,59 @@ export default function App() {
   const [foodMonthly, setFoodMonthly] = useState(650);
   const [activeTab, setActiveTab] = useState("resumo");
 
-  // Gestão diária: array de 5 dias (Qua-Dom)
-  const [dailyData, setDailyData] = useState(
-    DAYS_OF_WEEK.map(d => ({ day: d, rides: "", value: "", notes: "" }))
-  );
+  const [currentWeekWed, setCurrentWeekWed] = useState(() => getWednesdayOfDate(new Date()));
+  const [firebaseDailyData, setFirebaseDailyData] = useState({});
   const [addingDay, setAddingDay] = useState(null);
 
-  const weekDates = getWeekDates();
+  const weekDates = useMemo(() => getWeekDates(currentWeekWed), [currentWeekWed]);
 
-  const updateDaily = (idx, field, val) => {
-    setDailyData(prev => prev.map((d, i) => i === idx ? { ...d, [field]: val } : d));
-  };
+  // Sync Firebase
+  useEffect(() => {
+    const dbRef = ref(db, "dailyData");
+    const unsubscribe = onValue(dbRef, (snapshot) => {
+      const val = snapshot.val() || {};
+      setFirebaseDailyData(val);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const dailyData = useMemo(() => {
+    return DAYS_OF_WEEK.map((dayName, idx) => {
+      const dateInfo = weekDates[idx];
+      const dbEntry = firebaseDailyData[dateInfo.dateStr] || {};
+      return {
+        day: dayName,
+        dateStr: dateInfo.dateStr,
+        dateLabel: dateInfo.label,
+        rides: dbEntry.rides || "",
+        value: dbEntry.value || "",
+        notes: dbEntry.notes || ""
+      };
+    });
+  }, [weekDates, firebaseDailyData]);
 
   const totalFaturado = dailyData.reduce((s, d) => s + (parseFloat(d.value) || 0), 0);
   const totalCorridas = dailyData.reduce((s, d) => s + (parseInt(d.rides) || 0), 0);
+
+  const handlePrevWeek = () => {
+    setCurrentWeekWed(prev => {
+      const newDate = new Date(prev);
+      newDate.setDate(prev.getDate() - 7);
+      return newDate;
+    });
+  };
+
+  const handleNextWeek = () => {
+    setCurrentWeekWed(prev => {
+      const newDate = new Date(prev);
+      newDate.setDate(prev.getDate() + 7);
+      return newDate;
+    });
+  };
+
+  const handleCurrentWeek = () => {
+    setCurrentWeekWed(getWednesdayOfDate(new Date()));
+  };
 
   const sc = SCENARIOS[scenario];
   const weeklyGross = sc.weeklyGross;
@@ -130,8 +171,12 @@ export default function App() {
           addingDay={addingDay}
           setAddingDay={setAddingDay}
           weekDates={weekDates}
-          updateDaily={updateDaily}
           DAY_GOALS={DAY_GOALS}
+          onPrevWeek={handlePrevWeek}
+          onNextWeek={handleNextWeek}
+          onCurrentWeek={handleCurrentWeek}
+          currentWeekWed={currentWeekWed}
+          db={db}
         />
       )}
 

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { ref, set } from 'firebase/database';
 
 export default function GestaoTab({
   sc,
@@ -11,11 +12,58 @@ export default function GestaoTab({
   addingDay,
   setAddingDay,
   weekDates,
-  updateDaily,
-  DAY_GOALS
+  DAY_GOALS,
+  onPrevWeek,
+  onNextWeek,
+  onCurrentWeek,
+  currentWeekWed,
+  db
 }) {
+  const [formData, setFormData] = useState({ rides: "", value: "", notes: "" });
+
+  useEffect(() => {
+    if (addingDay !== null && dailyData[addingDay]) {
+      const day = dailyData[addingDay];
+      setFormData({
+        rides: day.rides || "",
+        value: day.value || "",
+        notes: day.notes || ""
+      });
+    }
+  }, [addingDay, dailyData]);
+
+  const handleInputChange = (field, val) => {
+    setFormData(prev => ({ ...prev, [field]: val }));
+  };
+
+  const handleSave = async (idx) => {
+    const day = dailyData[idx];
+    if (day && day.dateStr) {
+      const dbRef = ref(db, `dailyData/${day.dateStr}`);
+      await set(dbRef, {
+        rides: formData.rides,
+        value: formData.value,
+        notes: formData.notes
+      });
+    }
+    setAddingDay(null);
+  };
+
   return (
     <div className="tab-content gestao-tab">
+      {/* Seletor de Semana */}
+      <div className="week-selector" style={{ marginBottom: '16px' }}>
+        <button onClick={onPrevWeek} className="week-btn">◀</button>
+        <div className="week-info">
+          <span className="week-label">Semana de Trabalho</span>
+          <span className="week-dates">
+            {weekDates[0]?.label} a {weekDates[weekDates.length - 1]?.label}
+          </span>
+        </div>
+        <button onClick={onNextWeek} className="week-btn">▶</button>
+        <button onClick={onCurrentWeek} className="week-today-btn">Hoje</button>
+      </div>
+
       {/* Progresso da semana */}
       <div className="card highlight-card">
         <div className="card-badge">Progresso da semana</div>
@@ -52,10 +100,11 @@ export default function GestaoTab({
         <div className="nights-list">
           {dailyData.map((d, idx) => {
             const dayMeta = Math.round(weeklyGross * DAY_GOALS[idx]);
-            const dayVal = parseFloat(d.value) || 0;
-            const dayRides = parseInt(d.rides) || 0;
-            const dayPct = Math.min(100, (dayVal / dayMeta) * 100);
             const isOpen = addingDay === idx;
+            const dayVal = isOpen ? (parseFloat(formData.value) || 0) : (parseFloat(d.value) || 0);
+            const dayRides = isOpen ? (parseInt(formData.rides) || 0) : (parseInt(d.rides) || 0);
+            const dayPct = Math.min(100, (dayVal / dayMeta) * 100);
+            
             return (
               <div
                 key={d.day}
@@ -65,7 +114,7 @@ export default function GestaoTab({
                 <div className="night-row-header">
                   <div className="night-row-title-container">
                     <span className="night-name">{d.day}</span>
-                    <span className="night-date">{weekDates[idx]}</span>
+                    <span className="night-date">{d.dateLabel}</span>
                   </div>
                   <button
                     onClick={() => setAddingDay(isOpen ? null : idx)}
@@ -105,8 +154,8 @@ export default function GestaoTab({
                         type="number"
                         min="0"
                         placeholder="Ex: 18"
-                        value={d.rides}
-                        onChange={e => updateDaily(idx, "rides", e.target.value)}
+                        value={formData.rides}
+                        onChange={e => handleInputChange("rides", e.target.value)}
                         className="custom-input"
                       />
                     </div>
@@ -117,8 +166,8 @@ export default function GestaoTab({
                         min="0"
                         step="0.01"
                         placeholder="Ex: 320.50"
-                        value={d.value}
-                        onChange={e => updateDaily(idx, "value", e.target.value)}
+                        value={formData.value}
+                        onChange={e => handleInputChange("value", e.target.value)}
                         className="custom-input"
                       />
                     </div>
@@ -127,8 +176,8 @@ export default function GestaoTab({
                       <input
                         type="text"
                         placeholder="Ex: surge em Meireles, chuva..."
-                        value={d.notes}
-                        onChange={e => updateDaily(idx, "notes", e.target.value)}
+                        value={formData.notes}
+                        onChange={e => handleInputChange("notes", e.target.value)}
                         className="custom-input"
                       />
                     </div>
@@ -139,7 +188,7 @@ export default function GestaoTab({
                       </span>
                     </div>
                     <button
-                      onClick={() => setAddingDay(null)}
+                      onClick={() => handleSave(idx)}
                       className="save-btn"
                       style={{ backgroundColor: 'var(--theme-color)' }}
                     >
