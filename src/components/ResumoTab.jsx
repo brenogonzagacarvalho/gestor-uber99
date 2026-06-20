@@ -26,7 +26,7 @@ export default function ResumoTab({
 
   const adjustmentItems = [
     { label: "Carro (semanal)", value: koviWeekly, set: setKoviWeekly, min: 300, max: 800, step: 25 },
-    { label: "Combustível Fortaleza (mensal)", value: fuelFortaleza, set: setFuelFortaleza, min: 400, max: 1200, step: 50 },
+    { label: "Combustível Fortaleza (mensal)", value: fuelFortaleza, set: setFuelFortaleza, min: 400, max: 4000, step: 100 },
     { label: "Ônibus Quixadá↔Fortaleza (mensal)", value: busMonthly, set: setBusMonthly, min: 200, max: 600, step: 20 },
     { label: "Alimentação Fortaleza (mensal)", value: foodMonthly, set: setFoodMonthly, min: 300, max: 1000, step: 50 },
   ];

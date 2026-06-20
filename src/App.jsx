@@ -30,7 +30,7 @@ import CustosTab from "./components/CustosTab";
 export default function App() {
   const [scenario, setScenario] = useState("realista");
   const [koviWeekly, setKoviWeekly] = useState(450);
-  const [fuelFortaleza, setFuelFortaleza] = useState(800);
+  const [fuelFortaleza, setFuelFortaleza] = useState(2800);
   const [busMonthly, setBusMonthly] = useState(346);
   const [foodMonthly, setFoodMonthly] = useState(650);
   const [activeTab, setActiveTab] = useState("resumo");
